@@ -59,6 +59,7 @@ class ReactionTime(tk.Tk):
         self.sub_lbl.config(text=sub)
 
     def on_click(self, event=None):
+        self.focus_set()  # keep keyboard focus so the R reset key always works
         if self.state in ("idle", "result", "toosoon"):
             self.start_wait()
         elif self.state == "waiting":
