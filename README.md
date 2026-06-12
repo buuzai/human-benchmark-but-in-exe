@@ -10,7 +10,7 @@ To be clear about what this does **not** fix: any GUI test — this one included
 
 What this version does do is start the timer *after* the repaint is queued rather than before it, so the clock isn't running while the frame is still being drawn. It's a small honesty fix, not a magic latency eliminator.
 
-91 lines of Python. Compiled to a standalone `.exe`.
+101 lines of Python. Compiled to a standalone `.exe`.
 
 ---
 
