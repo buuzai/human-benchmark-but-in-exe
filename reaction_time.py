@@ -83,8 +83,9 @@ class ReactionTime(tk.Tk):
     def go_green(self):
         self.after_id = None
         self.state = "ready"
-        self.start_time = time.perf_counter()
         self.show("\u25CF \u25CF \u25CF", "Click!", "", GREEN)
+        self.update_idletasks()  # flush the repaint before starting the clock
+        self.start_time = time.perf_counter()
 
 if __name__ == "__main__":
     ReactionTime().mainloop()
