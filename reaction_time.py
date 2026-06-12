@@ -70,9 +70,14 @@ class ReactionTime(tk.Tk):
             self.state = "toosoon"
             self.show("\u26A0", "Too soon!", "Click to try again.", BLUE)
         elif self.state == "ready":
+            # Green is showing. If the clock hasn't armed yet (clicked in the
+            # paint->arm window), the reaction is effectively ~0 ms; clamp it to
+            # 0 rather than silently swallowing the click so the user always gets
+            # feedback.
             if not self.clock_armed:
-                return  # green is showing but the clock hasn't started yet; ignore
-            ms = int((time.perf_counter() - self.start_time) * 1000)
+                ms = 0
+            else:
+                ms = int((time.perf_counter() - self.start_time) * 1000)
             self.times.append(ms)
             avg = sum(self.times) / len(self.times)
             self.state = "result"
