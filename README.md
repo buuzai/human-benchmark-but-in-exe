@@ -1,36 +1,39 @@
-# Reaction Time
+# human-benchmark-but-in-exe
 
-A native Windows reaction time tester — no browser, no install, just you and the clock.
+A desktop clone of [Human Benchmark](https://humanbenchmark.com)'s Reaction Time test, built with Python + tkinter. Click when the box turns green, get your time in milliseconds.
 
-## Why a native app?
+## Features
 
-Browser-based tests run inside a rendering pipeline, an event loop, and a JS layer that all sit between your click and the measurement. A native app cuts out the browser and JS layers, so there's less *between* you and the timer.
+- humanbenchmark-style red/green/blue UI
+- Random 2–5 second delay before green so you can't cheat the timing
+- "Too soon!" detection if you click before green
+- Running stats: attempts, average, and best time
+- Press **R** to reset your scores
 
-To be clear about what this does **not** fix: any GUI test — this one included — still has display latency. The clock can't know exactly when the green pixels actually light up your monitor; there's repaint, compositor, and panel response time in the way. The only way to measure that precisely is with a photodiode and external hardware. So treat your number here the same way you'd treat a Human Benchmark score: good for tracking yourself over time, not an absolute measure of human nerve speed.
+## Run it
 
-What this version does do is start the timer *after* the repaint is queued rather than before it, so the clock isn't running while the frame is still being drawn. It's a small honesty fix, not a magic latency eliminator.
+Requires Python 3 (tkinter ships with it on Windows).
 
-101 lines of Python. Compiled to a standalone `.exe`.
+```
+py reaction_time.py
+```
 
----
-
-## Download
-
-Grab the latest `.exe` from the [Releases](https://github.com/buuzai/human-benchmark-but-in-exe/releases) page. No Python required.
-
----
-
-## Build it yourself
+## Build the .exe
 
 ```
 py -m pip install pyinstaller
-py -m PyInstaller --onefile --noconsole --icon=reactiontimeicon.ico reaction_time.py
+pyinstaller --onefile --windowed --icon=reactiontimeicon.ico reaction_time.py
 ```
 
-Output lands in `dist/`.
+The executable lands in `dist/`.
 
----
+## How to play
 
-## License
+1. Click anywhere to start.
+2. Wait on the red screen.
+3. The moment it turns green, click as fast as you can.
+4. Click to keep going, or press **R** to wipe your stats.
 
-Open source. Do whatever.
+## A note on timing accuracy
+
+The clock starts the instant tkinter flushes the green repaint — the closest point the toolkit gives you to "green is now on screen." It can't account for monitor/compositor presentation lag (only a photodiode rig could), so your numbers may read a few ms higher than a hardware-measured reaction. It's consistent enough to compare your own attempts, just don't treat it as lab-grade.
