@@ -88,14 +88,11 @@ class ReactionTime(tk.Tk):
         self.after_id = None
         self.state = "ready"
         self.show("\u25CF \u25CF \u25CF", "Click!", "", GREEN)
-        self.update_idletasks()  # push the repaint to the OS compositor
-        # Start the clock on the next event-loop tick rather than here, so the
-        # timer begins closer to when the green frame is actually presented.
-        # This doesn't eliminate display latency (only a photodiode could), but
-        # it stops us from starting the clock before the repaint is even queued.
-        self.after_idle(self._arm_clock)
-
-    def _arm_clock(self):
+        self.update_idletasks()  # force the repaint flush
+        # Arm the clock right after the flush — the closest point in tkinter to
+        # "green is now showing." This still can't account for compositor/monitor
+        # presentation time (only a photodiode could), but it puts no extra slack
+        # between the paint and the clock start.
         self.start_time = time.perf_counter()
         self.clock_armed = True
 
