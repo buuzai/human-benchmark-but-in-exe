@@ -18,6 +18,7 @@ class ReactionTime(tk.Tk):
         self.state = "idle"  # idle, waiting, ready, result, toosoon
         self.after_id = None
         self.start_time = 0
+        self.clock_armed = False
         self.times = []
 
         self.frame = tk.Frame(self, bg=BLUE, cursor="hand2")
@@ -68,6 +69,8 @@ class ReactionTime(tk.Tk):
             self.state = "toosoon"
             self.show("\u26A0", "Too soon!", "Click to try again.", BLUE)
         elif self.state == "ready":
+            if not self.clock_armed:
+                return  # green is showing but the clock hasn't started yet; ignore
             ms = int((time.perf_counter() - self.start_time) * 1000)
             self.times.append(ms)
             avg = sum(self.times) / len(self.times)
@@ -76,6 +79,7 @@ class ReactionTime(tk.Tk):
 
     def start_wait(self):
         self.state = "waiting"
+        self.clock_armed = False
         self.show("\u25CF \u25CF \u25CF", "Wait for green", "", RED)
         delay = random.randint(2000, 5000)
         self.after_id = self.after(delay, self.go_green)
@@ -84,8 +88,16 @@ class ReactionTime(tk.Tk):
         self.after_id = None
         self.state = "ready"
         self.show("\u25CF \u25CF \u25CF", "Click!", "", GREEN)
-        self.update_idletasks()  # flush the repaint before starting the clock
+        self.update_idletasks()  # push the repaint to the OS compositor
+        # Start the clock on the next event-loop tick rather than here, so the
+        # timer begins closer to when the green frame is actually presented.
+        # This doesn't eliminate display latency (only a photodiode could), but
+        # it stops us from starting the clock before the repaint is even queued.
+        self.after_idle(self._arm_clock)
+
+    def _arm_clock(self):
         self.start_time = time.perf_counter()
+        self.clock_armed = True
 
 if __name__ == "__main__":
     ReactionTime().mainloop()
