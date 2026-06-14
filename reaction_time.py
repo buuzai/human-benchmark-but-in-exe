@@ -63,12 +63,14 @@ class ReactionTime(tk.Tk):
         if self.state in ("idle", "result", "toosoon"):
             self.start_wait()
         elif self.state == "waiting":
-            # clicked before green
+            # clicked before green -> 350ms penalty so predicting actually costs you
             if self.after_id:
                 self.after_cancel(self.after_id)
                 self.after_id = None
+            self.times.append(350)
+            avg = sum(self.times) / len(self.times)
             self.state = "toosoon"
-            self.show("\u26A0", "Too soon!", "Click to try again.", BLUE)
+            self.show("\u26A0", "Too soon!", f"+350 ms penalty\nClick to try again.\nAttempts: {len(self.times)}   Avg: {avg:.0f} ms   Best: {min(self.times)} ms\nPress R to reset", BLUE)
         elif self.state == "ready":
             # Green is showing. If the clock hasn't armed yet (clicked in the
             # paint->arm window), the reaction is effectively ~0 ms; clamp it to
