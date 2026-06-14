@@ -1,18 +1,18 @@
 # human-benchmark-but-in-exe
 
-A desktop clone of [Human Benchmark](https://humanbenchmark.com)'s Reaction Time test, built with Python + tkinter. Click when the box turns green, get your time in milliseconds.
+A native desktop clone of [Human Benchmark](https://humanbenchmark.com)'s Reaction Time test. Python + tkinter, packaged as a Windows `.exe`. Wait for green, click fast, see your milliseconds.
 
-## Features
+## What it does
 
-- humanbenchmark-style red/green/blue UI
-- Random 2–5 second delay before green so you can't cheat the timing
-- "Too soon!" detection if you click before green
-- Running stats: attempts, average, and best time
-- Press **R** to reset your scores
+- Clean red / green / blue UI in the style of humanbenchmark
+- Random 2–5 second hold before the green flash so you can't time it
+- **Too-soon penalty:** click before green and you eat a flat **350 ms** on your record — no free retries for guessing
+- Live stats after every click: attempts, average, and best
+- **R** wipes your scores and starts fresh
 
-## Run it
+## Run
 
-Requires Python 3 (tkinter ships with it on Windows).
+Python 3 (tkinter is bundled with it on Windows):
 
 ```
 py reaction_time.py
@@ -25,15 +25,17 @@ py -m pip install pyinstaller
 pyinstaller --onefile --windowed --icon=reactiontimeicon.ico reaction_time.py
 ```
 
-The executable lands in `dist/`.
+Find the build in `dist/`.
 
 ## How to play
 
 1. Click anywhere to start.
-2. Wait on the red screen.
-3. The moment it turns green, click as fast as you can.
-4. Click to keep going, or press **R** to wipe your stats.
+2. Sit tight on red.
+3. Green hits — click as fast as you can.
+4. Keep clicking to log more attempts, or hit **R** to reset.
 
-## A note on timing accuracy
+Jump the gun before green and it logs a 350 ms penalty into your average. Patience pays.
 
-The clock starts the instant tkinter flushes the green repaint — the closest point the toolkit gives you to "green is now on screen." It can't account for monitor/compositor presentation lag (only a photodiode rig could), so your numbers may read a few ms higher than a hardware-measured reaction. It's consistent enough to compare your own attempts, just don't treat it as lab-grade.
+## Timing accuracy
+
+The clock arms the instant tkinter flushes the green repaint — the nearest thing the toolkit offers to "green is actually on screen." It can't measure monitor/compositor presentation lag (you'd need a photodiode for that), so readings may sit a few ms above a hardware-measured time. Plenty consistent for beating your own scores, just not lab-grade.
