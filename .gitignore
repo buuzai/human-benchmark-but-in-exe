@@ -1,0 +1,5 @@
+target/
+dist/
+build/
+*.spec
+__pycache__/

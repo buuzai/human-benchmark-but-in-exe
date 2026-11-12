@@ -1,12 +1,18 @@
 import tkinter as tk
-import random
-import time
+from random import randint
+from time import perf_counter
 
-# humanbenchmark-style colors
 RED = "#ce2636"
 GREEN = "#4bdb6a"
 BLUE = "#2b87d1"
 WHITE = "#ffffff"
+
+CLOCK = "\u23F1"
+WARN = "\u26A0"
+DOTS = "\u25CF \u25CF \u25CF"
+INTRO = "When the red box turns green, click as quickly as you can.\nClick anywhere to start."
+PENALTY = 350
+
 
 class ReactionTime(tk.Tk):
     def __init__(self):
@@ -15,94 +21,88 @@ class ReactionTime(tk.Tk):
         self.geometry("700x400")
         self.minsize(300, 200)
 
-        self.state = "idle"  # idle, waiting, ready, result, toosoon
+        self.state = "idle"
         self.after_id = None
-        self.start_time = 0
-        self.clock_armed = False
-        self.times = []
+        self.start_time = 0.0
+        self.count = 0
+        self.total = 0
+        self.best = 0
 
         self.frame = tk.Frame(self, bg=BLUE, cursor="hand2")
         self.frame.pack(fill="both", expand=True)
 
-        self.icon = tk.Label(self.frame, text="\u23F1", font=("Segoe UI", 40), bg=BLUE, fg=WHITE)
+        self.icon = tk.Label(self.frame, text=CLOCK, font=("Segoe UI", 40), bg=BLUE, fg=WHITE)
         self.icon.pack(pady=(60, 10))
 
         self.title_lbl = tk.Label(self.frame, text="Reaction Time Test", font=("Segoe UI", 36, "bold"), bg=BLUE, fg=WHITE)
         self.title_lbl.pack()
 
-        self.sub_lbl = tk.Label(self.frame, text="When the red box turns green, click as quickly as you can.\nClick anywhere to start.", font=("Segoe UI", 14), bg=BLUE, fg=WHITE)
+        self.sub_lbl = tk.Label(self.frame, text=INTRO, font=("Segoe UI", 14), bg=BLUE, fg=WHITE)
         self.sub_lbl.pack(pady=10)
 
-        for w in (self.frame, self.icon, self.title_lbl, self.sub_lbl):
-            w.bind("<Button-1>", self.on_click)
-
+        self.bind("<Button-1>", self.on_click)
         self.bind("<r>", self.reset)
         self.bind("<R>", self.reset)
 
-    def reset(self, event=None):
+    def show(self, icon, title, sub, color):
+        self.frame.config(bg=color)
+        self.icon.config(text=icon, bg=color)
+        self.title_lbl.config(text=title, bg=color)
+        self.sub_lbl.config(text=sub, bg=color)
+
+    def record(self, ms):
+        self.count += 1
+        self.total += ms
+        if self.count == 1 or ms < self.best:
+            self.best = ms
+
+    def stats(self):
+        return (f"Attempts: {self.count}   Avg: {self.total / self.count:.0f} ms   "
+                f"Best: {self.best} ms\nPress R to reset")
+
+    def cancel_timer(self):
         if self.after_id:
             self.after_cancel(self.after_id)
             self.after_id = None
-        self.times = []
+
+    def reset(self, event=None):
+        self.cancel_timer()
+        self.count = self.total = self.best = 0
         self.state = "idle"
-        self.show("\u23F1", "Reaction Time Test",
-                  "When the red box turns green, click as quickly as you can.\nClick anywhere to start.", BLUE)
-
-    def set_bg(self, color):
-        for w in (self.frame, self.icon, self.title_lbl, self.sub_lbl):
-            w.config(bg=color)
-
-    def show(self, icon, title, sub, color):
-        self.set_bg(color)
-        self.icon.config(text=icon)
-        self.title_lbl.config(text=title)
-        self.sub_lbl.config(text=sub)
+        self.show(CLOCK, "Reaction Time Test", INTRO, BLUE)
 
     def on_click(self, event=None):
-        self.focus_set()  # keep keyboard focus so the R reset key always works
-        if self.state in ("idle", "result", "toosoon"):
-            self.start_wait()
-        elif self.state == "waiting":
-            # clicked before green -> 350ms penalty so predicting actually costs you
-            if self.after_id:
-                self.after_cancel(self.after_id)
-                self.after_id = None
-            self.times.append(350)
-            avg = sum(self.times) / len(self.times)
-            self.state = "toosoon"
-            self.show("\u26A0", "Too soon!", f"+350 ms penalty\nClick to try again.\nAttempts: {len(self.times)}   Avg: {avg:.0f} ms   Best: {min(self.times)} ms\nPress R to reset", BLUE)
-        elif self.state == "ready":
-            # Green is showing. If the clock hasn't armed yet (clicked in the
-            # paint->arm window), the reaction is effectively ~0 ms; clamp it to
-            # 0 rather than silently swallowing the click so the user always gets
-            # feedback.
-            if not self.clock_armed:
-                ms = 0
-            else:
-                ms = int((time.perf_counter() - self.start_time) * 1000)
-            self.times.append(ms)
-            avg = sum(self.times) / len(self.times)
+        now = perf_counter()
+        state = self.state
+        if state == "ready":
+            ms = int((now - self.start_time) * 1000)
+            self.record(ms)
             self.state = "result"
-            self.show("\u23F1", f"{ms} ms", f"Click to keep going.\nAttempts: {len(self.times)}   Avg: {avg:.0f} ms   Best: {min(self.times)} ms\nPress R to reset", BLUE)
+            self.show(CLOCK, f"{ms} ms", "Click to keep going.\n" + self.stats(), BLUE)
+        elif state == "waiting":
+            self.cancel_timer()
+            self.record(PENALTY)
+            self.state = "toosoon"
+            self.show(WARN, "Too soon!", f"+{PENALTY} ms penalty\nClick to try again.\n" + self.stats(), BLUE)
+        else:
+            self.start_wait()
+        self.focus_set()
 
     def start_wait(self):
         self.state = "waiting"
-        self.clock_armed = False
-        self.show("\u25CF \u25CF \u25CF", "Wait for green", "", RED)
-        delay = random.randint(2000, 5000)
-        self.after_id = self.after(delay, self.go_green)
+        self.show(DOTS, "Wait for green", "", RED)
+        self.after_id = self.after(randint(2000, 5000), self.go_green)
 
     def go_green(self):
         self.after_id = None
         self.state = "ready"
-        self.show("\u25CF \u25CF \u25CF", "Click!", "", GREEN)
-        self.update_idletasks()  # force the repaint flush
-        # Arm the clock right after the flush — the closest point in tkinter to
-        # "green is now showing." This still can't account for compositor/monitor
-        # presentation time (only a photodiode could), but it puts no extra slack
-        # between the paint and the clock start.
-        self.start_time = time.perf_counter()
-        self.clock_armed = True
+        self.frame.config(bg=GREEN)
+        self.icon.config(bg=GREEN)
+        self.title_lbl.config(text="Click!", bg=GREEN)
+        self.sub_lbl.config(bg=GREEN)
+        self.update_idletasks()
+        self.start_time = perf_counter()
+
 
 if __name__ == "__main__":
     ReactionTime().mainloop()
